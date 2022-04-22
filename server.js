@@ -1,53 +1,28 @@
 const http = require('http');
 const Room = require('./models/room');
+const dotenv = require("dotenv");
 const mongoose = require('mongoose');
+
+dotenv.config({path:"./config.env"});
+
+console.log(process.env.PORT)
+
+const DB = process.env.DATABASE.replace(
+  '<password>',
+  process.env.DATABASE_PASSWORD
+)
+
 mongoose
-  .connect('mongodb://localhost:27017/hotel')
+  .connect(DB)
   .then(() => console.log('資料庫連線成功'))
   .catch((error) => console.log(error.reason));
 
-// const roomSchema = {
-//   name: String,
-//   price: {
-//     type: Number,
-//     required: [true, 'price 必填'],
-//   },
-//   rating: Number,
-// };
-
-// Room > rooms
-// user > users
-// 開頭文字強制小寫
-// 強制加 s
-// Room.create({
-//   name: '總統超級單人房',
-//   price: 200,
-//   rating: 4.5,
-// })
-//   .then(() => {
-//     console.log('資料寫入成功');
-//   })
-//   .catch((error) => {
-//     console.log(error.errors);
-//   });
-
-// 實例 實體 instance *******
-// const testRoom = new Room({
-//   name: '超級單人房7',
-//   price: 2000,
-//   rating: 4.5,
-// });
-
-// testRoom
-//   .save()
-//   .then(() => {
-//     console.log('新增資料成功!');
-//   })
-//   .catch((error) => {
-//     console.log(error.errors);
-//   });
-
 const requestListener = async (req, res) => {
+  let body = '';
+  req.on('data', (chunk) => {
+    body += chunk;
+  }); // chunk 是一段亂碼
+
   const headers = {
     'Access-Control-Allow-Headers':
       'Content-Type, Authorization, Content-Length, X-Requested-With',
@@ -55,17 +30,68 @@ const requestListener = async (req, res) => {
     'Access-Control-Allow-Methods': 'PATCH, POST, GET,OPTIONS,DELETE',
     'Content-Type': 'application/json',
   };
+
   if (req.url == '/rooms' && req.method == 'GET') {
-    const rooms = await Room.find(); // find()語法也是Promise
-    res.writeHead(200,headers);
-    res.write(JSON.stringify({
-        "status":"success",
-        rooms
-    }))
+    const rooms = await Room.find(); // find() 語法也是Promise
+    res.writeHead(200, headers);
+    res.write(
+      JSON.stringify({
+        status: 'success',
+        rooms,
+      })
+    );
+    res.end();
+  } else if (req.url == '/rooms' && req.method == 'POST') {
+    console.log('waiting.....');
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        const newRoom = await Room.create({
+          name: data.name,
+          price: data.price,
+          rating: data.rating,
+        });
+        res.writeHead(200, headers);
+        res.write(
+          JSON.stringify({
+            status: 'success',
+            rooms: newRoom,
+          })
+        );
+        res.end();
+      } catch (error) {
+        res.writeHead(400, headers);
+        res.write(
+          JSON.stringify({
+            status: 'false',
+            message: '欄位沒有正確，或沒有此ID',
+            error: error,
+          })
+        );
+        res.end();
+      }
+    });
+  } else if (req.url == '/rooms' && req.method == 'DELETE') {
+    const rooms = await Room.deleteMany({});
+    res.writeHead(200, headers);
+    res.write(
+      JSON.stringify({
+        status: 'success',
+        rooms: [],
+      })
+    );
+    res.end();
+  } else if (req.url == '/rooms' && req.method == 'OPTIONS') {
+    res.writeHead(200, headers);
+    res.write();
+    res.end();
+  } else {
+    res.writeHead(200, headers);
+    res.write();
+    res.end();
   }
-  res.end();
 };
 
 const server = http.createServer(requestListener);
 
-server.listen(3005);
+server.listen(process.env.PORT);

@@ -1,24 +1,23 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const roomSchema = new mongoose.Schema(
-  {
-    name: String,
-    price: {
-      type: Number,
-      required: [true, 'price 必填'],
+    {
+        name: String,
+        price:{
+            type: Number,
+            required: [true,"價格必填"]
+        },
+        rating: Number,
+        createdAt: {
+            type: Date,
+            default: Date.now,
+            select: false
+        }
     },
-    rating: Number,
-    createAt: {
-      type: Date,
-      default: Date.now,
-      select: false,
-    },
-  },
-  {
-    versionKey: false,
-    // timestamps: true
-  }
-);
+    {
+        versionKey: false
+    }
+)
 
-const Room = mongoose.model('room', roomSchema);
+const Room = mongoose.model('Room', roomSchema);
 
-module.exports = Room
+module.exports = Room;
