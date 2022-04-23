@@ -1,16 +1,16 @@
 const http = require('http');
 const Room = require('./models/room');
-const dotenv = require("dotenv");
+const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 
-dotenv.config({path:"./config.env"});
+dotenv.config({ path: './config.env' });
 
-console.log(process.env.PORT)
+console.log(process.env.PORT);
 
 const DB = process.env.DATABASE.replace(
   '<password>',
   process.env.DATABASE_PASSWORD
-)
+);
 
 mongoose
   .connect(DB)
@@ -42,7 +42,6 @@ const requestListener = async (req, res) => {
     );
     res.end();
   } else if (req.url == '/rooms' && req.method == 'POST') {
-    console.log('waiting.....');
     req.on('end', async () => {
       try {
         const data = JSON.parse(body);
@@ -83,11 +82,15 @@ const requestListener = async (req, res) => {
     res.end();
   } else if (req.url == '/rooms' && req.method == 'OPTIONS') {
     res.writeHead(200, headers);
-    res.write();
     res.end();
   } else {
-    res.writeHead(200, headers);
-    res.write();
+    res.writeHead(404, headers);
+    res.write(
+      JSON.stringify({
+        status: 'false',
+        message: '無此網站路由',
+      })
+    );
     res.end();
   }
 };
